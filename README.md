@@ -4,7 +4,7 @@ SDK11 Nordic legacy DFU OTA bootloader
 
 ### Getting started
 
-This needs slightly patched Nordic SDK11, run get-sdk11.sh and hopefully it should be downloaded, extracted into SDK11 folder and patched.
+This needs slightly patched Nordic SDK11, run get-sdk11.sh and hopefully it should be downloaded, extracted into SDK11 folder and patched with sdk11.patch. If it fails then do it by hand :-) Needs `wget`, `unzip`, `patch` and `dos2unix` to convert text files to unix format.
 
 Then just type `make`, output is in `_build/nrf52832_xxaa_s132_<address>.hex`.
 
