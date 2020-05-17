@@ -17,3 +17,4 @@ You can change some variables in Makefile
 - -DDISABLE_BUTTONLESS_DFU - trims down size, disables Buttonless DFU
 - -DDISABLE_DFU_APPCHECK - trims down size, disables check for application and device version in dfu package, softdevice version is still checked
 - -DSMALL_INTERRUPT_VECTORS - trims down size, make initial interrupt vectors area size smaller (from 0x400 to 0x100)
+- GNU_INSTALL_ROOT - location of ARM gcc compiler, I have used [gcc-arm-none-eabi-8-2019-q3-update](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads/8-2019q3-update) which is latest gcc 8, newer gcc 9 produced bigger code for me
