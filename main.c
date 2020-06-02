@@ -38,9 +38,10 @@
 static void leds_init(void)
 {
 #if LEDS_NUMBER > 0
-    nrf_gpio_range_cfg_output(LED_START, LED_STOP);
-    nrf_gpio_pins_set(LEDS_MASK);
-// from dfu_transport_ble - leds_init
+// these come from board definition included from boards.h
+//    nrf_gpio_range_cfg_output(LED_START, LED_STOP); // set range of pins as output
+//    nrf_gpio_pins_set(LEDS_MASK); // set all pins to 1 (= turn LED off)
+// moved here from dfu_transport_ble - leds_init
     LED_OUTPUT(ADVERTISING_LED_PIN_NO);
     LED_OUTPUT(CONNECTED_LED_PIN_NO);
     LED_OFF(ADVERTISING_LED_PIN_NO);
@@ -160,10 +161,10 @@ static void scheduler_init(void)
 int main(void)
 {
     uint32_t err_code;
-#ifndef DISABLE_BUTTONLESS_DFU
-    bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
-#else
+#ifdef DISABLE_BUTTONLESS_DFU
     bool     app_reset = false;
+#else
+    bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
 #endif
     bool     dfu_start = app_reset || (NRF_POWER->GPREGRET == 1);
 

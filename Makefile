@@ -1,8 +1,30 @@
-#PROJECT_NAME := dfu_single_bank_ble_s132_pca10040
 SDK_ROOT=./SDK11
 GNU_INSTALL_ROOT?=$(HOME)/gcc-arm-none-eabi-8-2019-q3-update
 GNU_PREFIX?=arm-none-eabi
 
+ifeq ("$(BOARD)","F07")
+#F07, BUTTONLESS DFU is needed for original app
+
+BOOTLOADER_START=7a000
+BOARD_CFLAGS+=-DFEED_WATCHDOG
+BOARD_CFLAGS+=-DDISABLE_DFU_APPCHECK
+
+else ifeq ("$(BOARD)","P8")
+
+BOOTLOADER_START=78000
+BOARD_CFLAGS+=-DFEED_WATCHDOG
+BOARD_CFLAGS+=-DDISABLE_DFU_APPCHECK
+BOARD_CFLAGS+=-DHAS_LF_XTAL
+
+else ifeq ("$(BOARD)","D6")
+
+BOOTLOADER_START=78000
+BOARD_CFLAGS+=-DFEED_WATCHDOG
+BOARD_CFLAGS+=-DDISABLE_DFU_APPCHECK
+BOARD_CFLAGS+=-DDISABLE_BUTTONLESS_DFU
+
+else
+BOARD=nrf52832_xxaa
 # start address used also in linker file name
 BOOTLOADER_START=7b000
 BOARD_CFLAGS+=-DBOOTLOADER_REGION_START=0x$(BOOTLOADER_START)
@@ -11,6 +33,10 @@ BOARD_CFLAGS+=-DDISABLE_BUTTONLESS_DFU
 BOARD_CFLAGS+=-DDISABLE_DFU_APPCHECK
 #let interrupt vectors ocuppy only 0x100 size instead of 0x400
 BOARD_ASMFLAGS=-DSMALL_INTERRUPT_VECTORS
+endif
+
+BOARD_CFLAGS+=-DBOARD=$(BOARD) -DBOARD_$(BOARD)
+BOARD_ASMFLAGS+=-DBOARD=$(BOARD) -DBOARD_$(BOARD)
 
 export OUTPUT_FILENAME
 #MAKEFILE_NAME := $(CURDIR)/$(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
@@ -187,17 +213,17 @@ ASMFLAGS += -DNRF52_PAN_62
 ASMFLAGS += -DNRF52_PAN_63
 
 #default target - first one defined
-default: clean nrf52832_xxaa_s132
+default: clean $(BOARD)_s132
 
 #building all targets
 all: clean
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e cleanobj
-	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e nrf52832_xxaa_s132
+	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e $(BOARD)_s132
 
 #target for printing all targets
 help:
 	@echo following targets are available:
-	@echo 	nrf52832_xxaa_s132
+	@echo 	$(BOARD)_s132
 
 C_SOURCE_FILE_NAMES = $(notdir $(C_SOURCE_FILES))
 C_PATHS = $(call remduplicates, $(dir $(C_SOURCE_FILES) ) )
@@ -212,10 +238,10 @@ vpath %.s $(ASM_PATHS)
 
 OBJECTS = $(ASM_OBJECTS) $(C_OBJECTS) 
 
-nrf52832_xxaa_s132: OUTPUT_FILENAME := nrf52832_xxaa_s132_$(BOOTLOADER_START)
-nrf52832_xxaa_s132: LINKER_SCRIPT=./dfu_gcc_nrf52_$(BOOTLOADER_START).ld
+$(BOARD)_s132: OUTPUT_FILENAME := $(BOARD)_s132_$(BOOTLOADER_START)
+$(BOARD)_s132: LINKER_SCRIPT=./dfu_gcc_nrf52_$(BOOTLOADER_START).ld
 
-nrf52832_xxaa_s132: $(BUILD_DIRECTORIES) $(OBJECTS)
+$(BOARD)_s132: $(BUILD_DIRECTORIES) $(OBJECTS)
 	@echo Linking target: $(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -lm -o $(OUTPUT_BINARY_DIRECTORY)/$(OUTPUT_FILENAME).out
 	$(NO_ECHO)$(MAKE) -f $(MAKEFILE_NAME) -C $(MAKEFILE_DIR) -e finalize
@@ -268,7 +294,7 @@ clean:
 
 cleanobj:
 	$(RM) $(BUILD_DIRECTORIES)/*.o
-flash: nrf52832_xxaa_s132
+flash: $(BOARD)_s132
 	@echo Flashing: $(OUTPUT_BINARY_DIRECTORY)/$<.hex
 	nrfjprog --program $(OUTPUT_BINARY_DIRECTORY)/$<.hex -f nrf52  --chiperase
 	nrfjprog --reset -f nrf52
