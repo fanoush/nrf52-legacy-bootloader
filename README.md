@@ -8,6 +8,8 @@ This needs slightly patched Nordic SDK11, run get-sdk11.sh and hopefully it shou
 
 Then just type `make`, output is in `_build/nrf52832_xxaa_s132_<address>.hex`.
 
+To build for specific board (e.g. F07)  run it like `make BOARD=F07` and the output should be in `_build/F07_s132_<address>.hex`.
+
 ### Changes
 
 You can change some variables in Makefile
