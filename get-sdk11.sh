@@ -6,7 +6,10 @@ pushd SDK11
 unzip ../nRF5_SDK_11.0.0_*.zip || exit 0
 rm *.msi
 find . \( -name '*.ld' -o -name '*.c' -o -name '*.h' -o -name '*Makefile*' -o -name '*.txt' -o -name '*.hex' -o -name '*.s' -o -name '*.S' \) -print0 | xargs -0 dos2unix
-# printf "GNU_INSTALL_ROOT := %s\nGNU_VERSION := %s\nGNU_PREFIX := %s\n" $HOME/gcc-arm-none-eabi-8-* 8.3.1 arm-none-eabi >components/toolchain/gcc/Makefile.posix
+if [ -d $HOME/gcc-arm-none-eabi-8-* ] ; then
+# Makefile.posix is included from SDK examples Makefile so fix that one
+printf "GNU_INSTALL_ROOT := %s\nGNU_VERSION := %s\nGNU_PREFIX := %s\n" $HOME/gcc-arm-none-eabi-8-* 8.3.1 arm-none-eabi >components/toolchain/gcc/Makefile.posix
+fi
 patch -p1 <../sdk11.patch
 popd
 fi
