@@ -1,3 +1,12 @@
+#ifdef BOARD_DK08
+#include "board-DK08.h"
+#endif
+#ifdef BOARD_F07
+#include "board-F07.h"
+#endif
+#ifdef BOARD_D6
+#include "board-D6.h"
+#endif
 
 #ifdef BSP_LED_0
 
