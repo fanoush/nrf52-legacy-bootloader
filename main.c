@@ -55,9 +55,15 @@ static void leds_init(void)
 static void buttons_init(void)
 {
 #if BUTTONS_NUMBER > 0
-    nrf_gpio_cfg_sense_input(BOOTLOADER_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
+//    nrf_gpio_cfg_sense_input(BOOTLOADER_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
+  nrf_gpio_cfg_input(BUTTON_1,BUTTON_1_PULL);
 #endif
 }
+#if BUTTONS_NUMBER > 0
+#define button1_state() (nrf_gpio_pin_read(BUTTON_1)==BUTTON_1_VALUE)
+#else
+#define button1_state() (false)
+#endif
 
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 1                                                       /**< Include the service_changed characteristic. For DFU this should normally be the case. */
@@ -208,7 +214,11 @@ int main(void)
         scheduler_init();
     }
 
-///    dfu_start |= ((nrf_gpio_pin_read(BOOTLOADER_BUTTON) == 0) ? true: false);
+
+#if BUTTONS_NUMBER>0
+    if (NRF_POWER->RESETREAS==0 && button1_state()) dfu_start=true; // go to bootloader when button held on powerup
+    if (app_reset && !button1_state()) dfu_start=false; // if buttonless DFU request, require also holding button to enter DFU
+#endif
 
     if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
     {
