@@ -10,6 +10,7 @@
 #include "nrf_soc.h"
 #include "app_error.h"
 #include "nrf_gpio.h"
+#include "nrf_delay.h"
 #include "ble.h"
 #include "nrf.h"
 #include "ble_hci.h"
@@ -54,16 +55,33 @@ static void leds_init(void)
  */
 static void buttons_init(void)
 {
+
 #if BUTTONS_NUMBER > 0
 //    nrf_gpio_cfg_sense_input(BOOTLOADER_BUTTON, BUTTON_PULL, NRF_GPIO_PIN_SENSE_LOW);
   nrf_gpio_cfg_input(BUTTON_1,BUTTON_1_PULL);
-#endif
-}
-#if BUTTONS_NUMBER > 0
 #define button1_state() (nrf_gpio_pin_read(BUTTON_1)==BUTTON_1_VALUE)
 #else
 #define button1_state() (false)
 #endif
+
+#ifdef POWER_PIN
+  nrf_gpio_cfg_input(POWER_PIN,POWER_PULL);
+#define power_on() (nrf_gpio_pin_read(POWER_PIN)==POWER_ON)
+#else
+#define power_on() (true)
+#endif
+
+#ifdef MOTOR_PIN
+#define motor_on() nrf_gpio_pin_write(MOTOR_PIN,MOTOR_ON)
+#define motor_off() nrf_gpio_pin_write(MOTOR_PIN,1-MOTOR_ON)
+  motor_off();
+  nrf_gpio_cfg_output(MOTOR_PIN);
+#else
+#define motor_on()
+#define motor_off()
+#endif
+
+}
 
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 1                                                       /**< Include the service_changed characteristic. For DFU this should normally be the case. */
@@ -173,6 +191,7 @@ int main(void)
     bool     app_reset = (NRF_POWER->GPREGRET == BOOTLOADER_DFU_START);
 #endif
     bool     dfu_start = app_reset || (NRF_POWER->GPREGRET == 1);
+    bool     app_valid;
 
     if (dfu_start)
     {
@@ -214,13 +233,37 @@ int main(void)
         scheduler_init();
     }
 
-
-#if BUTTONS_NUMBER>0
-    if (NRF_POWER->RESETREAS==0 && button1_state()) dfu_start=true; // go to bootloader when button held on powerup
-    if (app_reset && !button1_state()) dfu_start=false; // if buttonless DFU request, require also holding button to enter DFU
+    app_valid = bootloader_app_is_valid(DFU_BANK_0_REGION_START);
+#if BUTTONS_NUMBER > 0
+#pragma message("Buttons enabled")
+    if (NRF_POWER->RESETREAS==0 && app_valid){
+	// cold boot with valid app - allow enter dfu when on charger and holding button
+#if defined(BUTTON_1_ISTOUCH) && (BUTTON_1_ISTOUCH == 1)
+#pragma message("Touch button enabled")
+	// touch button doesn't work when it is held at cold boot, try to vibrate and wait for touch 3 seconds
+	motor_on();
+	nrf_delay_ms(300);
+	motor_off();
+	if (power_on()) {
+	    int count=3000;//3 seconds
+	    while (--count>0){
+	        nrf_delay_ms(1);//1 ms
+	        if(!button1_state()) continue;
+	        dfu_start=true; // go to bootloader when button held on powerup
+	        break;
+	    }
+	    motor_on();
+	    nrf_delay_ms(300);
+	    motor_off();
+	}
+#else
+	if(button1_state()) dfu_start=true;
+#endif
+    }
+    if (app_reset && !(button1_state()||power_on())) dfu_start=false; // if buttonless DFU request, require also holding button to enter DFU
 #endif
 
-    if (dfu_start || (!bootloader_app_is_valid(DFU_BANK_0_REGION_START)))
+    if (dfu_start || (!app_valid))
     {
         LED_ON(UPDATE_IN_PROGRESS_LED);
 
