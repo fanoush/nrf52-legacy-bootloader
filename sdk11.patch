@@ -1,6 +1,6 @@
 diff -Naur SDK11.orig/components/libraries/bootloader_dfu/bootloader.c SDK11/components/libraries/bootloader_dfu/bootloader.c
 --- SDK11.orig/components/libraries/bootloader_dfu/bootloader.c	2020-05-17 22:15:40.264414600 +0200
-+++ SDK11/components/libraries/bootloader_dfu/bootloader.c	2020-05-17 23:05:24.851969200 +0200
++++ SDK11/components/libraries/bootloader_dfu/bootloader.c	2020-05-18 00:24:19.364741100 +0200
 @@ -78,10 +78,21 @@
  {
      for (;;)
@@ -26,7 +26,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/bootloader.c SDK11/com
  
 diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_init_template.c SDK11/components/libraries/bootloader_dfu/dfu_init_template.c
 --- SDK11.orig/components/libraries/bootloader_dfu/dfu_init_template.c	2020-05-17 22:15:40.283415100 +0200
-+++ SDK11/components/libraries/bootloader_dfu/dfu_init_template.c	2020-05-17 22:59:08.173851200 +0200
++++ SDK11/components/libraries/bootloader_dfu/dfu_init_template.c	2020-05-18 00:24:19.365706800 +0200
 @@ -86,7 +86,7 @@
      memcpy(m_extended_packet,
             &p_init_packet->softdevice[p_init_packet->softdevice_len],
@@ -47,7 +47,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_init_template.c SD
      //              error is returned.
 diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_single_bank.c SDK11/components/libraries/bootloader_dfu/dfu_single_bank.c
 --- SDK11.orig/components/libraries/bootloader_dfu/dfu_single_bank.c	2020-05-17 22:15:40.285414000 +0200
-+++ SDK11/components/libraries/bootloader_dfu/dfu_single_bank.c	2020-05-17 22:59:08.176545100 +0200
++++ SDK11/components/libraries/bootloader_dfu/dfu_single_bank.c	2020-05-18 00:24:19.367733700 +0200
 @@ -658,6 +658,8 @@
          uint32_t block_size      = (boot_settings.sd_image_start - sd_start) / 2;
          uint32_t image_end       = boot_settings.sd_image_start + boot_settings.sd_image_size;
@@ -68,8 +68,8 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_single_bank.c SDK1
  
 diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SDK11/components/libraries/bootloader_dfu/dfu_transport_ble.c
 --- SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c	2020-05-17 22:15:40.287413300 +0200
-+++ SDK11/components/libraries/bootloader_dfu/dfu_transport_ble.c	2020-05-17 22:59:08.179542900 +0200
-@@ -39,8 +39,6 @@
++++ SDK11/components/libraries/bootloader_dfu/dfu_transport_ble.c	2020-05-24 22:10:16.037415800 +0200
+@@ -39,14 +39,15 @@
  #define DFU_REV_MAJOR                        0x00                                                    /** DFU Major revision number to be exposed. */
  #define DFU_REV_MINOR                        0x08                                                    /** DFU Minor revision number to be exposed. */
  #define DFU_REVISION                         ((DFU_REV_MAJOR << 8) | DFU_REV_MINOR)                  /** DFU Revision number to be exposed. Combined of major and minor versions. */
@@ -78,7 +78,17 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  #define DFU_SERVICE_HANDLE                   0x000C                                                  /**< Handle of DFU service when DFU service is first service initialized. */
  #define BLE_HANDLE_MAX                       0xFFFF                                                  /**< Max handle value is BLE. */
  
-@@ -108,8 +106,10 @@
++#ifndef DEVICE_NAME
+ #define DEVICE_NAME                          "DfuTarg"                                               /**< Name of device. Will be included in the advertising data. */
++#endif
++#ifndef MANUFACTURER_NAME
+ #define MANUFACTURER_NAME                    "NordicSemiconductor"                                   /**< Manufacturer. Will be passed to Device Information Service. */
+-
++#endif
+ #define MIN_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(15, UNIT_1_25_MS))             /**< Minimum acceptable connection interval (11.25 milliseconds). */
+ #define MAX_CONN_INTERVAL                    (uint16_t)(MSEC_TO_UNITS(30, UNIT_1_25_MS))             /**< Maximum acceptable connection interval (15 milliseconds). */
+ #define SLAVE_LATENCY                        0                                                       /**< Slave latency. */
+@@ -108,8 +109,10 @@
  static bool                 m_pkt_rcpt_notif_enabled = false;                                        /**< Variable to denote whether packet receipt notification has been enabled by the DFU controller.*/
  static uint16_t             m_conn_handle            = BLE_CONN_HANDLE_INVALID;                      /**< Handle of the current connection. */
  static bool                 m_is_advertising         = false;                                        /**< Variable to indicate if advertising is ongoing.*/
@@ -89,7 +99,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  static uint32_t             m_direct_adv_cnt         = APP_DIRECTED_ADV_TIMEOUT;                     /**< Counter of direct advertisements. */
  static uint8_t            * mp_final_packet;                                                         /**< Pointer to final data packet received. When callback for succesful packet handling is received from dfu bank handling a transfer complete response can be sent to peer. */
  
-@@ -132,6 +132,7 @@
+@@ -132,6 +135,7 @@
          return NRF_ERROR_INVALID_STATE;
      }
  
@@ -97,7 +107,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
      if (m_ble_peer_data_valid)
      {
          err_code = sd_ble_gatts_sys_attr_set(m_conn_handle,
-@@ -157,6 +158,7 @@
+@@ -157,6 +161,7 @@
          }
      }
      else
@@ -105,7 +115,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
      {
          err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0, 0);
      }
-@@ -685,7 +687,7 @@
+@@ -685,7 +690,7 @@
  
          // Initialize advertising parameters (used when starting advertising).
          memset(&m_adv_params, 0, sizeof(m_adv_params));
@@ -114,7 +124,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
          if (m_ble_peer_data_valid)
          {
              ble_gap_irk_t empty_irk = {{0}};
-@@ -722,6 +724,7 @@
+@@ -722,6 +727,7 @@
              }
          }
          else
@@ -122,7 +132,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
          {
              advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
              m_adv_params.type        = BLE_GAP_ADV_TYPE_ADV_IND;
-@@ -734,7 +737,7 @@
+@@ -734,7 +740,7 @@
          err_code = sd_ble_gap_adv_start(&m_adv_params);
          APP_ERROR_CHECK(err_code);
  
@@ -131,7 +141,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  
          m_is_advertising = true;
      }
-@@ -752,7 +755,7 @@
+@@ -752,7 +758,7 @@
          err_code = sd_ble_gap_adv_stop();
          APP_ERROR_CHECK(err_code);
  
@@ -140,7 +150,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  
          m_is_advertising = false;
      }
-@@ -771,8 +774,8 @@
+@@ -771,8 +777,8 @@
      switch (p_ble_evt->header.evt_id)
      {
          case BLE_GAP_EVT_CONNECTED:
@@ -151,7 +161,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  
              m_conn_handle    = p_ble_evt->evt.gap_evt.conn_handle;
              m_is_advertising = false;
-@@ -784,7 +787,7 @@
+@@ -784,7 +790,7 @@
                  uint16_t sys_attr_len = 128;
              
                  m_direct_adv_cnt = APP_DIRECTED_ADV_TIMEOUT;
@@ -160,7 +170,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
          
                  err_code = sd_ble_gatts_sys_attr_get(m_conn_handle, 
                                                       sys_attr, 
-@@ -805,6 +808,7 @@
+@@ -805,6 +811,7 @@
              m_conn_handle = BLE_CONN_HANDLE_INVALID;
  
              break;
@@ -168,7 +178,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  
          case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
              {
-@@ -826,7 +830,7 @@
+@@ -826,7 +833,7 @@
                  APP_ERROR_CHECK(err_code);
              }
              break;
@@ -177,7 +187,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
          case BLE_GATTS_EVT_TIMEOUT:
              if (p_ble_evt->evt.gatts_evt.params.timeout.src == BLE_GATT_TIMEOUT_SRC_PROTOCOL)
              {
-@@ -886,6 +890,7 @@
+@@ -886,6 +893,7 @@
              }
              break;
  
@@ -185,7 +195,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
          case BLE_GAP_EVT_SEC_INFO_REQUEST:
              {
                  ble_gap_enc_info_t * p_enc_info = NULL;
-@@ -904,6 +909,7 @@
+@@ -904,6 +912,7 @@
                  APP_ERROR_CHECK(err_code);
              }
              break;
@@ -193,7 +203,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  
          case BLE_GATTS_EVT_SYS_ATTR_MISSING:
          case BLE_GAP_EVT_CONN_SEC_UPDATE:
-@@ -938,19 +944,6 @@
+@@ -938,19 +947,6 @@
  }
  
  
@@ -213,7 +223,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  /**@brief     Function for the GAP initialization.
   *
   * @details   This function will setup all the necessary GAP (Generic Access Profile) parameters of
-@@ -1036,8 +1029,6 @@
+@@ -1036,8 +1032,6 @@
      m_tear_down_in_progress = false;
      m_pkt_type              = PKT_TYPE_INVALID;
  
@@ -222,7 +232,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
      err_code = softdevice_ble_evt_handler_set(ble_evt_dispatch);
      VERIFY_SUCCESS(err_code);
  
-@@ -1045,13 +1036,14 @@
+@@ -1045,13 +1039,14 @@
  
      err_code = hci_mem_pool_open();
      VERIFY_SUCCESS(err_code);
@@ -240,12 +250,13 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_transport_ble.c SD
  
 diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_types.h SDK11/components/libraries/bootloader_dfu/dfu_types.h
 --- SDK11.orig/components/libraries/bootloader_dfu/dfu_types.h	2020-05-17 22:15:40.290413800 +0200
-+++ SDK11/components/libraries/bootloader_dfu/dfu_types.h	2020-05-17 23:07:43.384735300 +0200
-@@ -58,7 +58,9 @@
++++ SDK11/components/libraries/bootloader_dfu/dfu_types.h	2020-09-21 20:56:38.845064100 +0200
+@@ -58,7 +58,10 @@
          
  #elif NRF52     
          
 +#ifndef BOOTLOADER_REGION_START
++#warning "Hardcoding BOOTLOADER_REGION_START to 0x0007A000"
  #define BOOTLOADER_REGION_START             0x0007A000                  /**< This field should correspond to start address of the bootloader, found in UICR.RESERVED, 0x10001014, register. This value is used for sanity check, so the bootloader will fail immediately if this value differs from runtime value. The value is used to determine max application size for updating. */
 +#endif
  #define BOOTLOADER_SETTINGS_ADDRESS         0x0007F000                  /**< The field specifies the page location of the bootloader settings address. */
@@ -253,7 +264,7 @@ diff -Naur SDK11.orig/components/libraries/bootloader_dfu/dfu_types.h SDK11/comp
          
 diff -Naur SDK11.orig/components/toolchain/gcc/gcc_startup_nrf52.s SDK11/components/toolchain/gcc/gcc_startup_nrf52.s
 --- SDK11.orig/components/toolchain/gcc/gcc_startup_nrf52.s	2020-05-17 22:15:41.049922900 +0200
-+++ SDK11/components/toolchain/gcc/gcc_startup_nrf52.s	2020-05-17 22:59:08.182584000 +0200
++++ SDK11/components/toolchain/gcc/gcc_startup_nrf52.s	2020-05-18 00:24:19.375179900 +0200
 @@ -130,6 +130,7 @@
      .long   0                           /*Reserved */
      .long   0                           /*Reserved */
@@ -279,3 +290,255 @@ diff -Naur SDK11.orig/components/toolchain/gcc/gcc_startup_nrf52.s SDK11/compone
      .size __isr_vector, . - __isr_vector
  
  /* Reset Handler */
+diff -Naur SDK11.orig/components/toolchain/system_nrf52.c SDK11/components/toolchain/system_nrf52.c
+--- SDK11.orig/components/toolchain/system_nrf52.c	2020-05-17 22:15:41.064922800 +0200
++++ SDK11/components/toolchain/system_nrf52.c	2020-09-28 20:10:23.859428200 +0200
+@@ -44,6 +44,7 @@
+ static bool errata_37(void);
+ static bool errata_57(void);
+ static bool errata_66(void);
++static bool errata_108(void);
+ 
+ 
+ #if defined ( __CC_ARM )
+@@ -64,21 +65,21 @@
+     /* Workaround for Errata 16 "System: RAM may be corrupt on wakeup from CPU IDLE" found at the Errata document
+        for your device located at https://infocenter.nordicsemi.com/ */
+     if (errata_16()){
+-        *(volatile uint32_t *)0x4007C074 = 3131961357ul; 
++        *(volatile uint32_t *)0x4007C074 = 3131961357ul;
+     }
+-    
++
+     /* Workaround for Errata 31 "CLOCK: Calibration values are not correctly loaded from FICR at reset" found at the Errata document
+        for your device located at https://infocenter.nordicsemi.com/ */
+     if (errata_31()){
+         *(volatile uint32_t *)0x4000053C = ((*(volatile uint32_t *)0x10000244) & 0x0000E000) >> 13;
+     }
+-    
++
+     /* Workaround for Errata 32 "DIF: Debug session automatically enables TracePort pins" found at the Errata document
+        for your device located at https://infocenter.nordicsemi.com/ */
+     if (errata_32()){
+         CoreDebug->DEMCR &= ~CoreDebug_DEMCR_TRCENA_Msk;
+     }
+-    
++
+     /* Workaround for Errata 36 "CLOCK: Some registers are not reset when expected" found at the Errata document
+        for your device located at https://infocenter.nordicsemi.com/  */
+     if (errata_36()){
+@@ -86,22 +87,22 @@
+         NRF_CLOCK->EVENTS_CTTO = 0;
+         NRF_CLOCK->CTIV = 0;
+     }
+-    
++
+     /* Workaround for Errata 37 "RADIO: Encryption engine is slow by default" found at the Errata document
+        for your device located at https://infocenter.nordicsemi.com/  */
+     if (errata_37()){
+         *(volatile uint32_t *)0x400005A0 = 0x3;
+     }
+-    
++
+     /* Workaround for Errata 57 "NFCT: NFC Modulation amplitude" found at the Errata document
+        for your device located at https://infocenter.nordicsemi.com/  */
+     if (errata_57()){
+-        *(volatile uint32_t *)0x40005610 = 0x00000005; 
+-        *(volatile uint32_t *)0x40005688 = 0x00000001; 
+-        *(volatile uint32_t *)0x40005618 = 0x00000000; 
++        *(volatile uint32_t *)0x40005610 = 0x00000005;
++        *(volatile uint32_t *)0x40005688 = 0x00000001;
++        *(volatile uint32_t *)0x40005618 = 0x00000000;
+         *(volatile uint32_t *)0x40005614 = 0x0000003F;
+     }
+-    
++
+     /* Workaround for Errata 66 "TEMP: Linearity specification not met with default settings" found at the Errata document
+        for your device located at https://infocenter.nordicsemi.com/  */
+     if (errata_66()){
+@@ -123,16 +124,22 @@
+         NRF_TEMP->T3 = NRF_FICR->TEMP.T3;
+         NRF_TEMP->T4 = NRF_FICR->TEMP.T4;
+     }
++
++    /* Workaround for Errata 108 "RAM: RAM content cannot be trusted upon waking up from System ON Idle or System OFF mode" found at the Errata document
++       for your device located at https://infocenter.nordicsemi.com/  */
++    if (errata_108()){
++        *(volatile uint32_t *)0x40000EE4 = *(volatile uint32_t *)0x10000258 & 0x0000004F;
++    }
+     
+     /* Enable the FPU if the compiler used floating point unit instructions. __FPU_USED is a MACRO defined by the
+      * compiler. Since the FPU consumes energy, remember to disable FPU use in the compiler if floating point unit
+      * operations are not used in your code. */
+     #if (__FPU_USED == 1)
+-        SCB->CPACR |= (3UL << 20) | (3UL << 22); 
++        SCB->CPACR |= (3UL << 20) | (3UL << 22);
+         __DSB();
+         __ISB();
+     #endif
+-    
++
+     /* Configure NFCT pins as GPIOs if NFCT is not to be used in your code. If CONFIG_NFCT_PINS_AS_GPIOS is not defined,
+        two GPIOs (see Product Specification to see which ones) will be reserved for NFC and will not be available as
+        normal GPIOs. */
+@@ -147,9 +154,9 @@
+             NVIC_SystemReset();
+         }
+     #endif
+-    
++
+     /* Configure GPIO pads as pPin Reset pin if Pin Reset capabilities desired. If CONFIG_GPIO_AS_PINRESET is not
+-      defined, pin reset will not be available. One GPIO (see Product Specification to see which one) will then be 
++      defined, pin reset will not be available. One GPIO (see Product Specification to see which one) will then be
+       reserved for PinReset and not available as normal GPIO. */
+     #if defined (CONFIG_GPIO_AS_PINRESET)
+         if (((NRF_UICR->PSELRESET[0] & UICR_PSELRESET_CONNECT_Msk) != (UICR_PSELRESET_CONNECT_Connected << UICR_PSELRESET_CONNECT_Pos)) ||
+@@ -165,7 +172,7 @@
+             NVIC_SystemReset();
+         }
+     #endif
+-    
++
+     /* Enable SWO trace functionality. If ENABLE_SWO is not defined, SWO pin will be used as GPIO (see Product
+        Specification to see which one). */
+     #if defined (ENABLE_SWO)
+@@ -173,8 +180,8 @@
+         NRF_CLOCK->TRACECONFIG |= CLOCK_TRACECONFIG_TRACEMUX_Serial << CLOCK_TRACECONFIG_TRACEMUX_Pos;
+         NRF_P0->PIN_CNF[18] = (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos) | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
+     #endif
+-    
+-    /* Enable Trace functionality. If ENABLE_TRACE is not defined, TRACE pins will be used as GPIOs (see Product 
++
++    /* Enable Trace functionality. If ENABLE_TRACE is not defined, TRACE pins will be used as GPIOs (see Product
+        Specification to see which ones). */
+     #if defined (ENABLE_TRACE)
+         CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+@@ -192,10 +199,8 @@
+ 
+ static bool errata_16(void)
+ {
+-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
+-    {
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30)
+-        {
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
+             return true;
+         }
+     }
+@@ -205,18 +210,14 @@
+ 
+ static bool errata_31(void)
+ {
+-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
+-    {
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30)
+-        {
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
+             return true;
+         }
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40)
+-        {
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
+             return true;
+         }
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50)
+-        {
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
+             return true;
+         }
+     }
+@@ -226,10 +227,8 @@
+ 
+ static bool errata_32(void)
+ {
+-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
+-    {
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30)
+-        {
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
+             return true;
+         }
+     }
+@@ -239,18 +238,14 @@
+ 
+ static bool errata_36(void)
+ {
+-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
+-    {
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30)
+-        {
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
+             return true;
+         }
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40)
+-        {
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
+             return true;
+         }
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50)
+-        {
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
+             return true;
+         }
+     }
+@@ -260,10 +255,8 @@
+ 
+ static bool errata_37(void)
+ {
+-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
+-    {
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30)
+-        {
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
+             return true;
+         }
+     }
+@@ -273,10 +266,8 @@
+ 
+ static bool errata_57(void)
+ {
+-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
+-    {
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30)
+-        {
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
+             return true;
+         }
+     }
+@@ -286,10 +277,26 @@
+ 
+ static bool errata_66(void)
+ {
+-    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0))
+-    {
+-        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50)
+-        {
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
++            return true;
++        }
++    }
++
++    return false;
++}
++
++
++static bool errata_108(void)
++{
++    if ((((*(uint32_t *)0xF0000FE0) & 0x000000FF) == 0x6) && (((*(uint32_t *)0xF0000FE4) & 0x0000000F) == 0x0)){
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x30){
++            return true;
++        }
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x40){
++            return true;
++        }
++        if (((*(uint32_t *)0xF0000FE8) & 0x000000F0) == 0x50){
+             return true;
+         }
+     }
